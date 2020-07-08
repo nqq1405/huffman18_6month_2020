@@ -14,11 +14,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JFrame;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
+import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -46,7 +43,9 @@ public class huffman extends JFrame {
         l1.setFont(new Font("Serif", Font.BOLD, 25));
         t1 = new JTextField(50);
         b1 = new JButton("Nhập");
+        b1.setToolTipText("Nhập vào chuỗi");
         b2 = new JButton("Thoát");
+        b2.setToolTipText("Thoát chương trình");
 
         buttonsPanel.add(l1);
         buttonsPanel.add(t1);
@@ -70,8 +69,10 @@ public class huffman extends JFrame {
             } else {
                 String s = t1.getText();
                 Tree t = new Tree();
-                new bag_gia_tri(s);
                 NewWindow NW = new NewWindow(t.buildTree(s));
+                new bag_gia_tri(s);
+
+                new bag_gia_tri(t.duyet010(s));
             }
         }
     }
@@ -83,15 +84,15 @@ public class huffman extends JFrame {
 
 }
 
-// Node Class //
-class Node2 implements Comparable<Node2> {
 
-    public char ch;
-    public int freq;
+class Node2 implements Comparable<Node2> { //lop node
+
+    public String ch; // ký tự
+    public int freq; // tần suất lặp(số lần lặp)
     public Node2 left, right;
-    public int count;
+    public int count; // giá trị
 
-    Node2(char ch, int freq, Node2 left, Node2 right, int count) {
+    Node2(String ch, int freq, Node2 left, Node2 right, int count) {
         this.ch = ch;
         this.freq = freq;
         this.left = left;
@@ -99,7 +100,27 @@ class Node2 implements Comparable<Node2> {
         this.count = count;
     }
 
-//    private boolean isLeaf() {
+    public String getCh() {
+        return ch;
+    }
+
+    public int getFreq() {
+        return freq;
+    }
+
+    public Node2 getLeft() {
+        return left;
+    }
+
+    public Node2 getRight() {
+        return right;
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    //    private boolean isLeaf() {
 //        assert ((left == null) && (right == null)) || ((left != null) && (right != null));
 //        /**/
 //        return (left == null) && (right == null);
@@ -121,30 +142,31 @@ class Node2 implements Comparable<Node2> {
     }
 }
 
-//Tree Class//
+//Tree lớp//
 class Tree extends JFrame {
 
-    //counting frequency of every token in the string//
     public static int[] freqCount(String S) { // số lần xuất hiện ký tự trong 1 chuỗi
 
         int[] f = new int[1000];
         for (int i = 0; i < S.length(); i++) {
-
-            f[S.charAt(i)]++;
+            // Ví dụ: kí tự sẽ tự động được ép về int có giá trị tương ứng
+            // a = 65
+            // A = 97
+            f[S.charAt(i)]++; // giá trị phần tử tại kí tự tương ứng sẽ được tăng lên 1.
 
         }
 
         return f;
     }
 
-    //building the huffman tree from a String S//
+    // Xây cây huffman từ 1 chuỗi
     public static Node2 buildTree(String S) {
         PriorityQueue<Node2> queue = new PriorityQueue<Node2>();
         int[] f = new int[1000];
         f = freqCount(S);
         for (char i = 0; i < f.length; i++) {
             if (f[i] > 0) {
-                Node2 n = new Node2(i, f[i], null, null, 0);
+                Node2 n = new Node2(i + "", f[i], null, null, 0);
                 queue.add(n);
             }
         }
@@ -156,14 +178,42 @@ class Tree extends JFrame {
             Node2 l2 = queue.poll();
             l2.setcount(c);
             c++;
-            Node2 parent = new Node2('\0', l1.freq + l2.freq, l1, l2, 0);
+            Node2 parent = new Node2('\0' + l1.ch + l2.ch, l1.freq + l2.freq, l1, l2, 0);
             queue.add(parent);
         }
+        PriorityQueue<Node2> queue3 = queue;
         return queue.poll();
+    }
+
+
+    public static PriorityQueue<Node2> duyet010(String S) {
+        PriorityQueue<Node2> queue = new PriorityQueue<Node2>();
+        int[] f = new int[1000];
+        f = freqCount(S);
+        for (char i = 0; i < f.length; i++) {
+            if (f[i] > 0) {
+                Node2 n = new Node2(i + "", f[i], null, null, 0);
+                queue.add(n);
+            }
+        }
+        int c = 1;
+        while (queue.size() > 1) {
+            Node2 l1 = queue.poll();
+            l1.setcount(c);
+            c++;
+            Node2 l2 = queue.poll();
+            l2.setcount(c);
+            c++;
+            Node2 parent = new Node2('\0' + l1.ch + l2.ch, l1.freq + l2.freq, l1, l2, 0);
+            queue.add(parent);
+        }
+        return queue;
     }
 }
 
 class bag_gia_tri extends JFrame {
+
+    public static TreeMap<Character, String> duyet = new TreeMap<>();
 
     public void sx(int[] a) {
         for (int i = 0; i < a.length - 1; i++) {
@@ -177,6 +227,47 @@ class bag_gia_tri extends JFrame {
         }
     }
 
+    private static void duyet01(Node2 node, String s) {
+        if (node != null) {
+            if (node.right != null)
+                duyet01(node.getRight(), s + "1");
+
+            if (node.left != null)
+                duyet01(node.getLeft(), s + "0");
+
+            if (node.left == null && node.right == null)
+                duyet.put(node.getCh().charAt(0), s);
+        }
+    }
+
+    public bag_gia_tri(PriorityQueue<Node2> queue2) {
+        this.setSize(300, 250);
+        this.setTitle("Bảng Mã Huffman");
+
+        String[] s = {"Ký Tự", "ma huffman"};
+        JTable tb = new JTable();
+
+        tb.setEnabled(false);
+        DefaultTableModel tbl = (DefaultTableModel) tb.getModel();
+        tbl.setColumnIdentifiers(s);
+
+        duyet01(queue2.peek(), "");
+
+        for (Map.Entry<Character, String> en : duyet.entrySet()) {
+            Character k = en.getKey();
+            String v = en.getValue();
+
+            tbl.addRow(new Object[]{
+                    "( " + k + " )", v
+            });
+        }
+
+        JScrollPane jptb = new JScrollPane();
+        jptb.setViewportView(tb);
+        this.add(jptb);
+        this.setVisible(true);
+    }
+
     public bag_gia_tri(String S) {
         this.setSize(300, 250);
         this.setTitle("Tần suất Ký tự");
@@ -187,10 +278,11 @@ class bag_gia_tri extends JFrame {
         String[] s = {"Ký Tự", "Số lần lặp", "Tần Suất Lặp"};
         JTable tb = new JTable();
 
-        tb.setEnabled(false);
+//        tb.setEnabled(false);
         DefaultTableModel tbl = (DefaultTableModel) tb.getModel();
         tbl.setColumnIdentifiers(s);
-        sx(kt);
+
+
         String tongkt = null;
         int tongkt_s = 0;
         for (int i = 0; i < kt.length; i++) {
@@ -205,7 +297,7 @@ class bag_gia_tri extends JFrame {
             }
         }
         tbl.addRow(new Object[]{
-               "=>"+ tongkt, "Tong ky tu: " + tongkt_s,
+                "=>" + tongkt, "Tong ky tu: " + tongkt_s,
         });
         JScrollPane jptb = new JScrollPane();
         jptb.setViewportView(tb);
@@ -312,7 +404,7 @@ class NewWindow {
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(2000, 2000);
+            return new Dimension(1366, 768);
         }
 
         public TestPane() {
@@ -349,22 +441,21 @@ class NewWindow {
                     g2d.drawRect(x.get(j), y.get(j), 30, 30);
                     g2d.setColor(Color.BLUE); // màu cho khung
                     g2d.drawString(Integer.toString(node.get(j).freq), x.get(j) + 5, y.get(j) + 13);
-                    g2d.drawString(Character.toString(node.get(j).ch), x.get(j) + 10, y.get(j) + 20);
+                    g2d.drawString((node.get(j).ch), x.get(j) + 10, y.get(j) + 20);
                     g2d.setColor(Color.BLUE); // màu cho chữ
                     if ((node.get(j)).left != null) {
-                        g2d.drawString("1", (x.get(j) + x.get(index(node.get(j).left))) / 2, (y.get(j) + y.get(index(node.get(j).left))) / 2);
+                        g2d.drawString("0", (x.get(j) + x.get(index(node.get(j).left))) / 2, (y.get(j) + y.get(index(node.get(j).left))) / 2);
                         g2d.drawLine(x.get(j) + 20, y.get(j) + 20, x.get(index(node.get(j).left)), y.get(index(node.get(j).left)));
                         g2d.setColor(Color.RED); // RED
 
                     }
                     if ((node.get(j)).right != null) {
-                        g2d.drawString("0", (x.get(j) + x.get(index(node.get(j).right))) / 2, (y.get(j) + y.get(index(node.get(j).right))) / 2);
+                        g2d.drawString("1", (x.get(j) + x.get(index(node.get(j).right))) / 2, (y.get(j) + y.get(index(node.get(j).right))) / 2);
                         g2d.drawLine(x.get(j) + 20, y.get(j) + 20, x.get(index(node.get(j).right)), y.get(index(node.get(j).right)));
                         g2d.setColor(Color.PINK);
                     }
                 }
             }
-
         }
     }
 }
